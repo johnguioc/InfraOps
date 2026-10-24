@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InfraOps Solutions - Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            500: '#3b82f6', // Blue
+                            600: '#2563eb',
+                            900: '#0f172a', // Slate 900
+                        },
+                        darkpanel: '#1e293b', // Slate 800
+                        darker: '#020617', // Slate 950
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar for a sleek dark mode look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+        /* Flow animation for DB replication */
+        @keyframes flow {
+            0% { background-position: 0 0; }
+            100% { background-position: 20px 0; }
+        }
+        .flow-line {
+            background-image: linear-gradient(90deg, #10b981 50%, transparent 50%);
+            background-size: 20px 2px;
+            animation: flow 1s linear infinite;
+        }
+        /* Fade in animation for tabs */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-darker text-slate-200 font-sans min-h-screen flex overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-darkpanel border-r border-slate-800 flex flex-col hidden md:flex transition-all duration-300 shadow-xl z-20">
+        <!-- Logo -->
+        <div class="h-16 flex items-center px-6 border-b border-slate-800 bg-brand-900/50">
+            <svg class="w-8 h-8 text-brand-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            </svg>
+            <span class="text-xl font-bold text-white tracking-tight">InfraOps</span>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 py-6 px-4 space-y-2">
+            <button data-target="dashboard-view" class="nav-btn w-full flex items-center px-3 py-2.5 bg-brand-600/20 text-brand-500 rounded-lg transition-colors font-medium">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                Dashboard
+            </button>
+            <button data-target="servidores-view" class="nav-btn w-full flex items-center px-3 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100 rounded-lg transition-colors font-medium">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                Servidores (Nodos)
+            </button>
+            <button data-target="backups-view" class="nav-btn w-full flex items-center px-3 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100 rounded-lg transition-colors font-medium">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                Backups
+            </button>
+        </nav>
+        
+        <!-- User profile -->
+        <div class="p-4 border-t border-slate-800 bg-slate-900/50">
+            <div class="flex items-center">
+                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-sm font-bold text-white shadow-lg">
+                    PM
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-semibold text-slate-200">PyME Logistics</p>
+                    <p class="text-xs text-brand-400">Plan MSP Corporate</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto relative bg-brand-900/10">
+        
+        <!-- Top Header -->
+        <header class="h-16 bg-darkpanel/90 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-6 sticky top-0 z-10">
+            <div class="flex items-center">
+                <h1 class="text-xl font-semibold text-white tracking-wide" id="page-title">Executive Dashboard</h1>
+            </div>
+            
+            <div class="flex items-center space-x-6">
+                <!-- Clock -->
+                <div class="hidden lg:flex items-center text-sm text-slate-400 font-mono">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-2"></span>
+                    <span id="current-time">00:00:00</span>
+                </div>
+                
+                <!-- Emergency Button -->
+                <button onclick="openSupportModal()" class="flex items-center bg-red-600/90 hover:bg-red-500 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-[0_0_10px_rgba(220,38,38,0.4)] transition-all transform hover:scale-105 border border-red-500">
+                    <svg class="w-4 h-4 mr-2 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    Soporte de Emergencia
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic View Container -->
+        <div class="p-6 md:p-8">
+            
+            <!-- ================= VIEW 1: DASHBOARD ================= -->
+            <div id="dashboard-view" class="view-section space-y-6 fade-in">
+                
+                <!-- Metrics Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-darkpanel border border-slate-800 rounded-xl p-5 shadow-lg">
+                        <h3 class="text-slate-400 text-sm font-medium mb-1">Uptime Global (30 días)</h3>
+                        <div class="text-3xl font-bold text-white mb-3">99.99%</div>
+                        <div class="w-full bg-slate-800 rounded-full h-1.5 border border-slate-700">
+                            <div class="bg-emerald-500 h-1.5 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)]" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="bg-darkpanel border border-slate-800 rounded-xl p-5 shadow-lg">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-slate-400 text-sm font-medium mb-1">Nodos Activos</h3>
+                                <div class="text-3xl font-bold text-white mb-2">4 <span class="text-lg text-slate-500 font-normal">/ 4</span></div>
+                            </div>
+                            <div class="p-2 bg-brand-500/10 rounded-lg">
+                                <svg class="w-6 h-6 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                            </div>
+                        </div>
+                        <div class="text-xs text-emerald-400 flex items-center">
+                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                            Todos los sistemas operativos
+                        </div>
+                    </div>
+                    <div class="bg-darkpanel border border-slate-800 rounded-xl p-5 shadow-lg">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-slate-400 text-sm font-medium mb-1">Tickets Abiertos</h3>
+                                <div class="text-3xl font-bold text-white mb-2">0</div>
+                            </div>
+                            <div class="p-2 bg-emerald-500/10 rounded-lg">
+                                <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                        </div>
+                        <div class="text-xs text-slate-400">
+                            Tiempo de respuesta SLA: &lt; 15 min
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Infrastructure Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <!-- Global Resource Usage (Simulated Charts) -->
+                    <div class="bg-darkpanel border border-slate-800 rounded-xl p-6 shadow-lg">
+                        <h2 class="text-lg font-semibold text-white mb-6 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            Consumo de Recursos (Clúster)
+                        </h2>
+                        
+                        <div class="space-y-6">
+                            <!-- CPU Chart Mockup -->
+                            <div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span class="text-slate-400 font-medium">CPU Promedio</span>
+                                    <span class="text-emerald-400 font-bold">28%</span>
+                                </div>
+                                <div class="flex items-end h-16 space-x-1 mb-1">
+                                    <div class="w-1/12 bg-emerald-500/40 h-[30%] rounded-t-sm"></div>
+                                    <div class="w-1/12 bg-emerald-500/50 h-[40%] rounded-t-sm"></div>
+                                    <div class="w-1/12 bg-emerald-500/30 h-[25%] rounded-t-sm"></div>
+                                    <div class="w-1/12 bg-emerald-500/60 h-[45%] rounded-t-sm"></div>
+                                    <div class="w-1/12 bg-emerald-500/70 h-[50%] rounded-t-sm"></div>
+                                    <div class="w-1/12 bg-amber-500/60 h-[70%] rounded-t-sm"></div>
+                                    <div class="w-1/12 bg-emerald-500/50 h-[35%] rounded-t-sm"></div>
+                                    <div class="w-1/12 bg-emerald-500/40 h-[20%] rounded-t-sm"></div>
+                                    <div class="w-1/12 bg-emerald-500/30 h-[15%] rounded-t-sm"></div>
+                                    <div class="w-1/12 bg-emerald-500/40 h-[22%] rounded-t-sm"></div>
+                                    <div class="w-1/12 bg-emerald-500/50 h-[28%] rounded-t-sm"></div>
+                                    <div class="w-1/12 bg-emerald-500 rounded-t-sm h-[28%] shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+                                </div>
+                                <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+                                    <span>-1h</span>
+                                    <span>Ahora</span>
+                                </div>
+                            </div>
+
+                            <!-- RAM Chart Mockup -->
+                            <div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span class="text-slate-400 font-medium">RAM Asignada (128GB Total)</span>
+                                    <span class="text-brand-400 font-bold">65%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-3 border border-slate-700 overflow-hidden">
+                                    <div class="bg-brand-500 h-full" style="width: 65%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DB Replication & Backup Summary -->
+                    <div class="space-y-6 flex flex-col">
+                        <!-- DB Replication -->
+                        <div class="bg-darkpanel border border-slate-800 rounded-xl p-6 shadow-lg flex-1">
+                            <h2 class="text-lg font-semibold text-white mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                                PostgreSQL Replication Status
+                            </h2>
+                            
+                            <div class="flex items-center justify-between mt-2 bg-slate-900/50 p-5 rounded-lg border border-slate-700/50">
+                                <!-- Master -->
+                                <div class="text-center">
+                                    <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-600 flex items-center justify-center mx-auto mb-2 relative shadow-lg">
+                                        <svg class="w-6 h-6 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4"></path></svg>
+                                        <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                          <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                        </span>
+                                    </div>
+                                    <span class="text-[11px] font-semibold text-slate-200 block uppercase tracking-wider">Master DB</span>
+                                </div>
+                                
+                                <!-- Connection Line -->
+                                <div class="flex-1 px-4 text-center">
+                                    <div class="text-xs text-emerald-400 mb-1.5 font-bold tracking-wide">SINCRONIZADO</div>
+                                    <div class="h-1.5 w-full flow-line rounded-full"></div>
+                                    <div class="text-[10px] text-slate-500 mt-1.5 font-mono">Lag: 0.02ms</div>
+                                </div>
+
+                                <!-- Replica -->
+                                <div class="text-center">
+                                    <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-600 flex items-center justify-center mx-auto mb-2 shadow-lg">
+                                        <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4"></path></svg>
+                                        <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                                            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                        </span>
+                                    </div>
+                                    <span class="text-[11px] font-semibold text-slate-400 block uppercase tracking-wider">Replica DB</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Last Backup Summary -->
+                        <div class="bg-darkpanel border border-slate-800 rounded-xl p-5 shadow-lg flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 mr-4">
+                                    <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-slate-400 text-sm font-medium">Último Backup Exitoso</h3>
+                                    <div class="text-white font-semibold mt-0.5">Hoy, 02:00 AM</div>
+                                </div>
+                            </div>
+                            <button onclick="document.querySelector('.nav-btn[data-target=\'backups-view\']').click()" class="text-sm text-brand-400 hover:text-brand-300 font-medium">Ver detalles &rarr;</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 2: SERVIDORES (NODOS) ================= -->
+            <div id="servidores-view" class="view-section hidden space-y-6 fade-in">
+                <div class="flex justify-between items-end mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Infraestructura de Nodos</h2>
+                        <p class="text-slate-400 text-sm mt-1">Monitoreo en tiempo real de servidores virtuales administrados.</p>
+                    </div>
+                    <button class="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center transition shadow-lg">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        Solicitar Escalamiento
+                    </button>
+                </div>
+
+                <div class="bg-darkpanel border border-slate-800 rounded-xl shadow-xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-900/80 border-b border-slate-700 text-xs uppercase tracking-wider text-slate-400">
+                                    <th class="p-4 font-semibold">Hostname / IP</th>
+                                    <th class="p-4 font-semibold">Sistema Operativo</th>
+                                    <th class="p-4 font-semibold text-center">Estado</th>
+                                    <th class="p-4 font-semibold w-48">Recursos (CPU/RAM)</th>
+                                    <th class="p-4 font-semibold">Uptime</th>
+                                    <th class="p-4 font-semibold text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800/60">
+                                
+                                <!-- Server Row 1: ERP -->
+                                <tr class="hover:bg-slate-800/30 transition-colors group">
+                                    <td class="p-4">
+                                        <div class="font-medium text-slate-200">Nodo Principal ERP</div>
+                                        <div class="text-xs text-slate-500 font-mono mt-0.5">192.168.1.10</div>
+                                    </td>
+                                    <td class="p-4 text-sm text-slate-300 flex items-center mt-1">
+                                        <svg class="w-4 h-4 mr-2 text-orange-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                                        Ubuntu 24.04 LTS
+                                    </td>
+                                    <td class="p-4 text-center">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span> Online
+                                        </span>
+                                    </td>
+                                    <td class="p-4">
+                                        <div class="space-y-2">
+                                            <div>
+                                                <div class="flex justify-between text-[10px] text-slate-400 mb-1"><span>CPU</span><span>45%</span></div>
+                                                <div class="w-full bg-slate-800 rounded-full h-1"><div class="bg-brand-500 h-1 rounded-full" style="width: 45%"></div></div>
+                                            </div>
+                                            <div>
+                                                <div class="flex justify-between text-[10px] text-slate-400 mb-1"><span>RAM</span><span>60%</span></div>
+                                                <div class="w-full bg-slate-800 rounded-full h-1"><div class="bg-brand-500 h-1 rounded-full" style="width: 60%"></div></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="p-4 text-sm text-slate-400">45d 12h</td>
+                                    <td class="p-4 text-right">
+                                        <div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button class="p-1.5 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 transition tooltip" title="Consola Web">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                            </button>
+                                            <button class="p-1.5 bg-slate-700 hover:bg-red-600/80 rounded text-slate-300 hover:text-white transition tooltip" title="Reiniciar Servicio">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- Server Row 2: DB Replica -->
+                                <tr class="hover:bg-slate-800/30 transition-colors group">
+                                    <td class="p-4">
+                                        <div class="font-medium text-slate-200">Nodo Réplica PostgreSQL</div>
+                                        <div class="text-xs text-slate-500 font-mono mt-0.5">192.168.1.11</div>
+                                    </td>
+                                    <td class="p-4 text-sm text-slate-300 flex items-center mt-1">
+                                        <svg class="w-4 h-4 mr-2 text-orange-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                                        Ubuntu 24.04 LTS
+                                    </td>
+                                    <td class="p-4 text-center">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span> Online
+                                        </span>
+                                    </td>
+                                    <td class="p-4">
+                                        <div class="space-y-2">
+                                            <div>
+                                                <div class="flex justify-between text-[10px] text-slate-400 mb-1"><span>CPU</span><span>20%</span></div>
+                                                <div class="w-full bg-slate-800 rounded-full h-1"><div class="bg-emerald-500 h-1 rounded-full" style="width: 20%"></div></div>
+                                            </div>
+                                            <div>
+                                                <div class="flex justify-between text-[10px] text-slate-400 mb-1"><span>RAM</span><span>80%</span></div>
+                                                <div class="w-full bg-slate-800 rounded-full h-1"><div class="bg-amber-500 h-1 rounded-full" style="width: 80%"></div></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="p-4 text-sm text-slate-400">45d 12h</td>
+                                    <td class="p-4 text-right">
+                                        <div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button class="p-1.5 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 transition tooltip" title="Consola Web">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                            </button>
+                                            <button class="p-1.5 bg-slate-700 hover:bg-red-600/80 rounded text-slate-300 hover:text-white transition tooltip" title="Reiniciar Servicio">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- Server Row 3: File Server (Warning) -->
+                                <tr class="hover:bg-slate-800/30 transition-colors group bg-amber-500/5">
+                                    <td class="p-4">
+                                        <div class="font-medium text-slate-200">Servidor de Archivos (NAS)</div>
+                                        <div class="text-xs text-slate-500 font-mono mt-0.5">192.168.1.15</div>
+                                    </td>
+                                    <td class="p-4 text-sm text-slate-300 flex items-center mt-1">
+                                        <svg class="w-4 h-4 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12s4.48 10 10 10 10-4.48 10-10zm-11 5H9v-2h2v2zm0-4H9V7h2v6z"/></svg>
+                                        Windows Server 2022
+                                    </td>
+                                    <td class="p-4 text-center">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span> Warning
+                                        </span>
+                                    </td>
+                                    <td class="p-4">
+                                        <div class="space-y-2">
+                                            <div>
+                                                <div class="flex justify-between text-[10px] text-slate-400 mb-1"><span>CPU</span><span>85%</span></div>
+                                                <div class="w-full bg-slate-800 rounded-full h-1"><div class="bg-amber-500 h-1 rounded-full" style="width: 85%"></div></div>
+                                            </div>
+                                            <div>
+                                                <div class="flex justify-between text-[10px] text-slate-400 mb-1"><span>Disco</span><span class="text-red-400">92%</span></div>
+                                                <div class="w-full bg-slate-800 rounded-full h-1"><div class="bg-red-500 h-1 rounded-full shadow-[0_0_5px_rgba(239,68,68,0.8)]" style="width: 92%"></div></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="p-4 text-sm text-slate-400">120d 05h</td>
+                                    <td class="p-4 text-right">
+                                        <div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button class="p-1.5 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 transition tooltip" title="Consola Web">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                            </button>
+                                            <button class="p-1.5 bg-slate-700 hover:bg-red-600/80 rounded text-slate-300 hover:text-white transition tooltip" title="Reiniciar Servicio">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- Server Row 4: Load Balancer -->
+                                <tr class="hover:bg-slate-800/30 transition-colors group">
+                                    <td class="p-4">
+                                        <div class="font-medium text-slate-200">Load Balancer (HAProxy)</div>
+                                        <div class="text-xs text-slate-500 font-mono mt-0.5">192.168.1.5</div>
+                                    </td>
+                                    <td class="p-4 text-sm text-slate-300 flex items-center mt-1">
+                                        <svg class="w-4 h-4 mr-2 text-indigo-400" fill="currentColor" viewBox="0 0 24 24"><path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18s-.41-.06-.57-.18l-7.9-4.44A.991.991 0 013 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18s.41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L5.4 7.85l6.6 3.7 6.6-3.7L12 4.15z"/></svg>
+                                        Alpine Linux
+                                    </td>
+                                    <td class="p-4 text-center">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span> Online
+                                        </span>
+                                    </td>
+                                    <td class="p-4">
+                                        <div class="space-y-2">
+                                            <div>
+                                                <div class="flex justify-between text-[10px] text-slate-400 mb-1"><span>CPU</span><span>10%</span></div>
+                                                <div class="w-full bg-slate-800 rounded-full h-1"><div class="bg-brand-500 h-1 rounded-full" style="width: 10%"></div></div>
+                                            </div>
+                                            <div>
+                                                <div class="flex justify-between text-[10px] text-slate-400 mb-1"><span>RAM</span><span>15%</span></div>
+                                                <div class="w-full bg-slate-800 rounded-full h-1"><div class="bg-brand-500 h-1 rounded-full" style="width: 15%"></div></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="p-4 text-sm text-slate-400">200d 14h</td>
+                                    <td class="p-4 text-right">
+                                        <div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button class="p-1.5 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 transition tooltip" title="Consola Web">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                            </button>
+                                            <button class="p-1.5 bg-slate-700 hover:bg-red-600/80 rounded text-slate-300 hover:text-white transition tooltip" title="Reiniciar Servicio">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 3: BACKUPS ================= -->
+            <div id="backups-view" class="view-section hidden space-y-6 fade-in">
+                <div class="flex justify-between items-end mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Historial de Backups (Nube)</h2>
+                        <p class="text-slate-400 text-sm mt-1">Registros de copias de seguridad automatizadas en Amazon S3.</p>
+                    </div>
+                </div>
+
+                <div class="bg-darkpanel border border-slate-800 rounded-xl shadow-xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-900/80 border-b border-slate-700 text-xs uppercase tracking-wider text-slate-400">
+                                    <th class="p-4 font-semibold">Fecha y Hora</th>
+                                    <th class="p-4 font-semibold">Base de Datos / Volumen</th>
+                                    <th class="p-4 font-semibold">Tipo</th>
+                                    <th class="p-4 font-semibold">Tamaño</th>
+                                    <th class="p-4 font-semibold">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800/60">
+                                <!-- Backup 1 -->
+                                <tr class="hover:bg-slate-800/30 transition-colors">
+                                    <td class="p-4">
+                                        <div class="font-medium text-slate-200">Hoy, 02:00 AM</div>
+                                        <div class="text-xs text-slate-500 font-mono">Job ID: #BKP-9831</div>
+                                    </td>
+                                    <td class="p-4 text-sm text-slate-300">Producción PostgreSQL (ERP)</td>
+                                    <td class="p-4 text-sm"><span class="px-2 py-1 bg-slate-700 rounded text-slate-300 text-xs">Incremental</span></td>
+                                    <td class="p-4 text-sm text-slate-300 font-mono">1.2 GB</td>
+                                    <td class="p-4">
+                                        <span class="inline-flex items-center text-sm font-medium text-emerald-400">
+                                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Exitoso
+                                        </span>
+                                    </td>
+                                </tr>
+                                <!-- Backup 2 -->
+                                <tr class="hover:bg-slate-800/30 transition-colors">
+                                    <td class="p-4">
+                                        <div class="font-medium text-slate-200">Ayer, 02:00 AM</div>
+                                        <div class="text-xs text-slate-500 font-mono">Job ID: #BKP-9830</div>
+                                    </td>
+                                    <td class="p-4 text-sm text-slate-300">Producción PostgreSQL (ERP)</td>
+                                    <td class="p-4 text-sm"><span class="px-2 py-1 bg-brand-900 border border-brand-500/30 rounded text-brand-300 text-xs">Full Backup</span></td>
+                                    <td class="p-4 text-sm text-slate-300 font-mono">14.2 GB</td>
+                                    <td class="p-4">
+                                        <span class="inline-flex items-center text-sm font-medium text-emerald-400">
+                                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Exitoso
+                                        </span>
+                                    </td>
+                                </tr>
+                                <!-- Backup 3 -->
+                                <tr class="hover:bg-slate-800/30 transition-colors">
+                                    <td class="p-4">
+                                        <div class="font-medium text-slate-200">Ayer, 01:00 AM</div>
+                                        <div class="text-xs text-slate-500 font-mono">Job ID: #BKP-9829</div>
+                                    </td>
+                                    <td class="p-4 text-sm text-slate-300">Servidor de Archivos NAS</td>
+                                    <td class="p-4 text-sm"><span class="px-2 py-1 bg-slate-700 rounded text-slate-300 text-xs">Incremental</span></td>
+                                    <td class="p-4 text-sm text-slate-300 font-mono">850 MB</td>
+                                    <td class="p-4">
+                                        <span class="inline-flex items-center text-sm font-medium text-emerald-400">
+                                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Exitoso
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Support Modal (Hidden) -->
+    <div id="support-modal" class="fixed inset-0 bg-darker/80 backdrop-blur-sm z-[100] hidden items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-darkpanel border border-slate-700 p-8 rounded-2xl shadow-2xl max-w-md w-full mx-4 transform scale-95 transition-transform duration-300" id="support-modal-content">
+            <div class="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20">
+                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-2">Soporte Técnico de Emergencia</h2>
+            <p class="text-slate-400 mb-6 text-sm">¿Experimenta una caída crítica? Nuestro equipo de ingenieros nivel 3 está disponible 24/7 para intervenir de inmediato.</p>
+            
+            <div class="space-y-3">
+                <button class="w-full flex items-center justify-center py-3 bg-red-600 hover:bg-red-500 text-white font-medium rounded-lg transition shadow-lg">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                    Llamada Directa (Prioridad Alta)
+                </button>
+                <button class="w-full flex items-center justify-center py-3 bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 font-medium rounded-lg transition">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                    Abrir Ticket Severidad 1
+                </button>
+            </div>
+            
+            <button onclick="closeSupportModal()" class="mt-4 w-full py-3 text-slate-400 hover:text-white text-sm font-medium transition">
+                Cancelar
+            </button>
+        </div>
+    </div>
+
+    <!-- Interactive Script -->
+    <script>
+        // Real-time clock update
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            document.getElementById('current-time').innerText = timeString + " UTC-5";
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Sidebar Navigation Logic
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const views = document.querySelectorAll('.view-section');
+        const pageTitle = document.getElementById('page-title');
+
+        const titles = {
+            'dashboard-view': 'Executive Dashboard',
+            'servidores-view': 'Gestión de Nodos',
+            'backups-view': 'Historial de Backups'
+        };
+
+        navButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active classes
+                navButtons.forEach(b => {
+                    b.classList.remove('bg-brand-600/20', 'text-brand-500');
+                    b.classList.add('text-slate-400');
+                });
+                
+                // Add active class
+                btn.classList.remove('text-slate-400');
+                btn.classList.add('bg-brand-600/20', 'text-brand-500');
+
+                // Hide all views
+                views.forEach(v => v.classList.add('hidden'));
+
+                // Show target view & update title
+                const targetId = btn.getAttribute('data-target');
+                const targetView = document.getElementById(targetId);
+                targetView.classList.remove('hidden');
+                pageTitle.innerText = titles[targetId];
+                
+                // Re-trigger animation
+                targetView.classList.remove('fade-in');
+                void targetView.offsetWidth; // Trigger reflow
+                targetView.classList.add('fade-in');
+            });
+        });
+
+        // Support Modal Logic
+        const modal = document.getElementById('support-modal');
+        const modalContent = document.getElementById('support-modal-content');
+
+        function openSupportModal() {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeSupportModal() {
+            modal.classList.add('opacity-0');
+            modalContent.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        }
+    </script>
+</body>
+</html>
